@@ -19,7 +19,6 @@ from .task import Task, TaskChain
 from .utils import save_json
 from .pool import RouterExperiencePool
 from config.setting import task_to_ability_map
-from config.setting import task_to_ability_map
 from prompt.default import DefaultPromptSet
 from utils.Result_Extractor import extract_answer
 from evaluator.Accuracy import Accuracy
@@ -132,7 +131,7 @@ class Experiment:
             elif decision == "execute":
 
                 task_chain.set_current_task_description(description) 
-                output = current_agent.execute_task(task_chain, self.constraints, self.thought_constraints, self.user_react,decision="execute")
+                output = current_agent.execute_task(task_chain, self.constraints, self.split_constraints, self.thought_constraints, self.user_react, decision="execute")
 
                 logger.info(f"Executor Query Prompt of Agent {current_agent.agent_id} for Task {task_chain.get_current_task_id()} is {output['query_prompt']}")
                 logger.info(f"Executor Response of Agent {current_agent.agent_id} for Task {task_chain.get_current_task_id()} is {output['response']}")

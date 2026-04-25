@@ -123,8 +123,4 @@ def main():
 
 
 if __name__=="__main__":
-    # try:
     main()
-    # except Exception as e:
-    #     logging.info(str(e))
-    pass

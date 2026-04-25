@@ -103,14 +103,15 @@ class RouterModule:
                         if (ability >= 0.5 and
                             next_agent_id_info['current_load'] < 3 and
                             (next_agent_id_info['is_outgoing'] or next_agent_id_info['is_incoming'])):
-                            next_agent_id = next_agent_id
+                            pass  # next_agent_id is already valid, keep it
                         else:
                             next_agent_id = self.find_best_alternative_agent(task.task_type, neighbors_info)
                     else:
                         next_agent_id = self.find_best_alternative_agent(task.task_type, neighbors_info)
 
             except Exception as e:
-                next_agent_id = self.find_best_alternative_agent(task)
+                logger.warning(f"Error extracting agent ID in router_decide_action: {e}")
+                next_agent_id = self.find_best_alternative_agent(task.task_type, neighbors_info)
 
         if decision in ["split"]:
             executable_tasks = response_dict.get('EXECUTABLE', '').lower().strip()
@@ -201,14 +202,15 @@ class RouterModule:
                         if (ability >= 0.5 and
                             next_agent_id_info['current_load'] < 3 and
                             (next_agent_id_info['is_outgoing'] or next_agent_id_info['is_incoming'])):
-                            next_agent_id = next_agent_id
+                            pass  # next_agent_id is already valid, keep it
                         else:
                             next_agent_id = self.find_best_alternative_agent(task.task_type, neighbors_info)
                     else:
                         next_agent_id = self.find_best_alternative_agent(task.task_type, neighbors_info)
 
-            except ValueError:
-                next_agent_id = self.find_best_alternative_agent(task)
+            except ValueError as e:
+                logger.warning(f"Error extracting agent ID in router_decide_next_agent_id: {e}")
+                next_agent_id = self.find_best_alternative_agent(task.task_type, neighbors_info)
 
 
 
@@ -881,17 +883,17 @@ class Agent:
 
 
     def calculate_correlation(self, newest_history, task_type1, task_type2):
-        task_type1_count = sum(1 for entry in newest_history if entry['task_type'] == task_type1)
-        task_type2_count = sum(1 for entry in newest_history if entry['task_type'] == task_type2)
-        
+        task_type1_count = sum(1 for entry in newest_history if entry.task_type == task_type1)
+        task_type2_count = sum(1 for entry in newest_history if entry.task_type == task_type2)
+
         if task_type1_count == 0 or task_type2_count == 0:
             return 0.0
-            
+
         cooccurrence = 0
         for i in range(len(newest_history)-1):
-            if newest_history[i]['task_type'] == task_type1 and newest_history[i+1]['task_type'] == task_type2:
+            if newest_history[i].task_type == task_type1 and newest_history[i+1].task_type == task_type2:
                 cooccurrence += 1
-                
+
         correlation = cooccurrence / min(task_type1_count, task_type2_count)
         return correlation
 

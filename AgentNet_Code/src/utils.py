@@ -143,7 +143,6 @@ def get_qwen_response(system_prompt, query_prompt,
     return generated_text
 
 
-import re
 
 def parse_decision_text(decision_text):
     """

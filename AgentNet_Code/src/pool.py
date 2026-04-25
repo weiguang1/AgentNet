@@ -267,7 +267,7 @@ class RouterExperiencePool(BaseExperiencePool):
 
     def get_newest_experience(self,task_type, k=50):
         experiences = self.retrieval_experiences[task_type]
-        return experiences[:-k]
+        return experiences[-k:]
 
     def set_experience_success_state(self, task_id, task_type, success):
         for index in range(len(self.retrieval_experiences[task_type])):
