@@ -57,31 +57,31 @@ def get_doubao_response(system_prompt, query_prompt):
 
 
 def get_gpt_response(system_prompt, query_prompt):
+    from openai import OpenAI
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", OPENAI_API_KEY))
+
     for attempt in range(MAX_RETRIES):
         try:
-            import openai  
-            openai.api_key = OPENAI_API_KEY
-
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": query_prompt}
                 ],
                 temperature=0.0,
-                max_tokens = 2048,
+                max_tokens=2048,
                 top_p=1.0,
             )
-            generated_text = response.choices[0].message['content'].strip()
+            generated_text = response.choices[0].message.content.strip()
+            return generated_text
 
-            break
         except Exception as e:
             print(f"API call attempt {attempt + 1} failed: {e}")
-            if attempt == MAX_RETRIES-1:
+            if attempt == MAX_RETRIES - 1:
                 raise
-            time.sleep(1) # wait before retry
+            time.sleep(2 ** attempt)
 
-    return generated_text
+    return ""
 
 
 

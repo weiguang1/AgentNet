@@ -5,7 +5,11 @@ import time
 import difflib
 from dataclasses import dataclass
 import heapq
-import openai
+import os
+import logging
+from openai import OpenAI
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class Experience:
@@ -27,7 +31,11 @@ class ExperiencePool:
         self.capacity = capacity
         self.experiences: Dict[str, List[Experience]] = defaultdict(list)
         self.task_vectors = {}
-        openai.api_key = os.getenv("OPENAI_API_KEY")
+
+        # 使用新版 OpenAI SDK 初始化客户端
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.embedding_model = "text-embedding-ada-002"
+        self.embedding_dim = 1536
         
     def add_experience(self, experience: Experience) -> None:
         task_type = experience.task_type
@@ -53,21 +61,24 @@ class ExperiencePool:
             
 
     def _compute_embeddings(self, prompt: str) -> np.ndarray:
-    """Compute embeddings using OpenAI API (with fallback)"""
-      try:
-          response = openai.Embedding.create(
-              model="text-embedding-ada-002", 
-              input=prompt
-          )
-          embeddings = response['data'][0]['embedding']
-          return np.array(embeddings)
-      except Exception as e:
-          print(f"OpenAI API Callingg Error: {e}")
-          words = set(prompt.lower().split())
-          vector = np.zeros(100)
-          for i, word in enumerate(words):
-              vector[hash(word) % 100] = 1
-          return vector 
+        """Compute embeddings using OpenAI API (with fallback)"""
+        try:
+            response = self.client.embeddings.create(
+                model=self.embedding_model,
+                input=prompt
+            )
+            embeddings = response.data[0].embedding
+            return np.array(embeddings)
+        except Exception as e:
+            logger.warning(f"OpenAI API Call Error: {e}")
+            words = set(prompt.lower().split())
+            vector = np.zeros(self.embedding_dim)
+            for word in words:
+                vector[hash(word) % self.embedding_dim] = 1.0
+            norm = np.linalg.norm(vector)
+            if norm > 0:
+                vector = vector / norm
+            return vector 
 
     def _calculate_similarity(self, exp1: Experience, exp2: Experience) -> float:
         """Calculate similarity between two experiences"""

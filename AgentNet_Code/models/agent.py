@@ -3,12 +3,16 @@ import numpy as np
 from typing import List, Dict, Tuple, Optional
 import time
 import random
+import os
+import logging
 from sklearn.feature_extraction.text import TfidfVectorizer
 import difflib
 from dataclasses import dataclass
 import heapq
 from models.experience_pool import ExperiencePool, Experience
-import openai
+from openai import OpenAI
+
+logger = logging.getLogger(__name__)
 
 class Agent:
     """Enhanced Agent with improved experience accumulation"""
@@ -29,34 +33,38 @@ class Agent:
         self.neighbors = []
         self.current_load = 0
         self.decay_rate = decay_rate
-        
+        self.max_retries = 3
+
+        # 使用新版 OpenAI SDK 初始化客户端
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
         # 任务关联图：记录任务类型之间的关联强度
         self.task_correlation = defaultdict(lambda: defaultdict(float))
 
     def call_openai_api(self, full_prompt: str) -> Tuple[str, bool]:
         """调用 OpenAI API 处理任务"""
-        try:
-            # 设置 API 密钥
-            openai.api_key = "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" ## api key for this project
+        for attempt in range(self.max_retries):
+            try:
+                response = self.client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "You are a helpful assistant."},
+                        {"role": "user", "content": full_prompt}
+                    ],
+                    max_tokens=100,
+                    temperature=0.7,
+                )
 
-            response = openai.ChatCompletion.create(
-                model="gpt-4o-mini",  # Chat model
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": full_prompt}
-                ],
-                max_tokens=100,
-                temperature=0.7,
-            )
+                generated_text = response.choices[0].message.content.strip()
+                return generated_text, True
 
-            # Extract the generated text
-            generated_text = response.choices[0].message['content'].strip()
-            return generated_text, True
+            except Exception as e:
+                logger.error(f"Error calling OpenAI API (attempt {attempt + 1}): {e}")
+                if attempt == self.max_retries - 1:
+                    return "", False
+                time.sleep(2 ** attempt)
 
-        
-        except Exception as e:
-            print(f"Error calling OpenAI API: {e}")
-            return "", False
+        return "", False
         
     def calculate_task_complexity(self, task) -> float:
         """计算任务复杂度"""
