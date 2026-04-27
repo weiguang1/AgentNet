@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 from .pool import RouterExperiencePool, ExecutorExperiencePool
 from .pool import RouterExperience, ExecutorExperience
-from .utils import get_doubao_response, get_gpt_response
+from .utils import get_doubao_response, get_gpt_response, get_local_llm_response
 from .utils import parse_decision_text, extract_agent_id, parse_split_pattern_to_subtask, parse_string_to_dict, extract_content_as_dict
 from .utils import calculate_task_complexity
 from .utils import get_average_abilities_from_task_type
@@ -36,6 +36,7 @@ from config.setting import BASIC_PROBLEM_COMPLEXITY, task_to_ability_map
 llm_model_response_map = {
     "doubao": get_doubao_response,
     "gpt-4o-mini": get_gpt_response,
+    "local": get_local_llm_response,
 }
 
 

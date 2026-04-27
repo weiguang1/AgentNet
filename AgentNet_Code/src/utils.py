@@ -142,7 +142,22 @@ def get_qwen_response(system_prompt, query_prompt,
             time.sleep(1)
     return generated_text
 
-
+def get_local_llm_response(system_prompt, query_prompt):
+      from openai import OpenAI
+      client = OpenAI(
+          api_key="not-needed",           # 本地不需要 key
+          base_url="http://localhost:8000/v1"
+      )
+      response = client.chat.completions.create(
+          model="Qwen/Qwen2.5-7B-Instruct",
+          messages=[
+              {"role": "system", "content": system_prompt},
+              {"role": "user", "content": query_prompt}
+          ],
+          temperature=0.0,
+          max_tokens=2048,
+      )
+      return response.choices[0].message.content.strip()
 
 def parse_decision_text(decision_text):
     """
